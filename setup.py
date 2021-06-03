@@ -41,7 +41,6 @@ setup(
     packages=find_packages(include=['leruli', 'leruli.*']),
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/leruli-com/leruli',
     version='0.1.0',
     zip_safe=False,
 )
