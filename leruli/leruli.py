@@ -1,7 +1,8 @@
 import urllib
 import requests as rq
+import os
 
-BASEURL = "https://api.leruli.com"
+BASEURL = os.getenv("LERULI_BASEURL", "https://api.leruli.com")
 
 
 def quickgeometry(smiles: str, format: str = "XYZ", version: str = None) -> str:
@@ -23,3 +24,22 @@ def quickgeometry(smiles: str, format: str = "XYZ", version: str = None) -> str:
         param = msg["loc"][-1]
         detail = msg["msg"]
         raise ValueError(f"{param}: {detail}")
+
+
+def singlepoint_submit(
+    filecontents: str,
+    level: str,
+    basisset: str,
+    charge: int = 0,
+    multiplicity: int = 1,
+    version: str = None,
+):
+    """Runs a single point calculation on a fixed geometry, specified as file.
+    Returns a token and an estimate in seconds how long this probably will take. The result can be obtained from singlepoint_retrieve() using the token."""
+    level = urllib.parse.quote(level)
+    basisset = urllib.parse.quote(basisset)
+    res = rq.post(
+        f"{BASEURL}/{version}/singlepoint/{level}/{basisset}/{charge}/{multiplicity}",
+        files={"file": filecontents},
+    )
+    print(res.content)
