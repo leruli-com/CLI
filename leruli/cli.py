@@ -96,5 +96,10 @@ def smiles2chemicalformula(
 
 cli = click.CommandCollection(sources=[cli1, cli2, cli3, cli4])
 
-if __name__ == "__main__":
+
+def main():
     sys.exit(cli())
+
+
+if __name__ == "__main__":
+    main()

@@ -2,6 +2,8 @@ import urllib
 import requests as rq
 import os
 
+__all__ = "quickgeometry canonicalizechemicalformula canonicalizesmiles smiles2chemicalformula".split()
+
 BASEURL = os.getenv("LERULI_BASEURL", "https://api.leruli.com")
 
 
