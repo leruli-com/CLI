@@ -28,6 +28,49 @@ def cli2():
     pass
 
 
+@cli2.command()
+@click.option("--version", default="latest", help="Request specific API version.")
+@click.argument("sumformula")
+def canonicalizechemicalformula(
+    sumformula: str,
+    version: str,
+):
+    """Canonicalize a sum formula."""
+    print(leruli.canonicalizechemicalformula(sumformula, version))
+
+
+@click.group()
+def cli3():
+    pass
+
+
+@cli3.command()
+@click.option("--version", default="latest", help="Request specific API version.")
+@click.argument("smiles")
+def canonicalizesmiles(
+    smiles: str,
+    version: str,
+):
+    """Canonicalize a SMILES string."""
+    print(leruli.canonicalizesmiles(smiles, version))
+
+
+@click.group()
+def cli4():
+    pass
+
+
+@cli4.command()
+@click.option("--version", default="latest", help="Request specific API version.")
+@click.argument("smiles")
+def smiles2chemicalformula(
+    smiles: str,
+    version: str,
+):
+    """Get the sum formula from SMILES."""
+    print(leruli.smiles2chemicalformula(smiles, version))
+
+
 # @cli2.command()
 # @click.option("--charge", type=int, default=0, help="Net charge of the molecule.")
 # @click.option(
@@ -51,7 +94,7 @@ def cli2():
 #     leruli.singlepoint_submit(content, level, basisset, charge, multiplicity, version)
 
 
-cli = click.CommandCollection(sources=[cli1, cli2])
+cli = click.CommandCollection(sources=[cli1, cli2, cli3, cli4])
 
 if __name__ == "__main__":
     sys.exit(cli())

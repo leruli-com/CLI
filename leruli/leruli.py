@@ -20,10 +20,10 @@ def quickgeometry(smiles: str, format: str = "XYZ", version: str = None) -> str:
         raise ValueError(f"{msg}")
     if res.status_code == 422:
         msg = res.json()["detail"][0]
-        print(res.json())
         param = msg["loc"][-1]
         detail = msg["msg"]
         raise ValueError(f"{param}: {detail}")
+    raise NotImplementedError("Unknown status code. Please update the python package.")
 
 
 def singlepoint_submit(
@@ -43,3 +43,41 @@ def singlepoint_submit(
         files={"file": filecontents},
     )
     print(res.content)
+
+
+def canonicalizechemicalformula(sumformula: str, version: str = None) -> str:
+    if version is None:
+        version = "latest"
+    res = rq.get(f"{BASEURL}/{version}/canonicalizechemicalformula/{sumformula}")
+    if res.status_code == 200:
+        return res.json()["chemicalformula"]
+    if res.status_code == 422:
+        msg = res.json()["detail"]
+        raise ValueError(msg)
+    raise NotImplementedError("Unknown status code. Please update the python package.")
+
+
+def canonicalizesmiles(smiles: str, version: str = None) -> str:
+    if version is None:
+        version = "latest"
+    smiles = urllib.parse.quote(smiles)
+    res = rq.get(f"{BASEURL}/{version}/canonicalizesmiles/{smiles}")
+    if res.status_code == 200:
+        return res.json()["smiles"]
+    if res.status_code == 422:
+        msg = res.json()["detail"]
+        raise ValueError(msg)
+    raise NotImplementedError("Unknown status code. Please update the python package.")
+
+
+def smiles2chemicalformula(smiles: str, version: str = None) -> str:
+    if version is None:
+        version = "latest"
+    smiles = urllib.parse.quote(smiles)
+    res = rq.get(f"{BASEURL}/{version}/smiles2chemicalformula/{smiles}")
+    if res.status_code == 200:
+        return res.json()["chemicalformula"]
+    if res.status_code == 422:
+        msg = res.json()["detail"]
+        raise ValueError(msg)
+    raise NotImplementedError("Unknown status code. Please update the python package.")
