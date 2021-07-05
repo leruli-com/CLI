@@ -3,6 +3,8 @@ import sys
 import click
 import leruli
 
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
 
 @click.group()
 def cli1():
@@ -94,7 +96,9 @@ def smiles2chemicalformula(
 #     leruli.singlepoint_submit(content, level, basisset, charge, multiplicity, version)
 
 
-cli = click.CommandCollection(sources=[cli1, cli2, cli3, cli4])
+cli = click.CommandCollection(
+    sources=[cli1, cli2, cli3, cli4], context_settings=CONTEXT_SETTINGS
+)
 
 
 def main():
