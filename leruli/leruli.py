@@ -3,7 +3,8 @@ import urllib
 import requests as rq
 import time
 import os
-import tqdm
+
+# import tqdm
 
 __all__ = "quickgeometry canonicalizechemicalformula canonicalizesmiles smiles2chemicalformula".split()
 
@@ -170,20 +171,17 @@ def graph_to_image(
     return _base_call("graph-to-image", payload, version, urgent, progress)
 
 
-def image_to_graph(
-    image: bytes, version: str = "latest", urgent: bool = False, progress: bool = False
-):
-    return _base_call(
-        "image-to-graph",
-        {},
-        version,
-        urgent,
-        progress,
-        {"file": ("image", image, "image/png")},
-    )
-
-
-# image_to_graph
+# def image_to_graph(
+#     image: bytes, version: str = "latest", urgent: bool = False, progress: bool = False
+# ):
+#     return _base_call(
+#         "image-to-graph",
+#         {},
+#         version,
+#         urgent,
+#         progress,
+#         {"file": ("image", image, "image/png")},
+#     )
 
 
 def _extract_error_message(res):
