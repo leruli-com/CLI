@@ -1,85 +1,202 @@
+from typing import Dict
 import urllib
 import requests as rq
+import time
 import os
+import tqdm
 
 __all__ = "quickgeometry canonicalizechemicalformula canonicalizesmiles smiles2chemicalformula".split()
 
 BASEURL = os.getenv("LERULI_BASEURL", "https://api.leruli.com")
 
 
-def quickgeometry(smiles: str, format: str = "XYZ", version: str = None) -> str:
-    """Returns an approximate 3D geometry from a given SMILES. Supported formats: SDF, PDB and XYZ. Works on molecules up to 60 heavy atoms."""
-    if version is None:
-        version = "latest"
-    smiles = urllib.parse.quote(smiles)
-    res = rq.get(f"{BASEURL}/{version}/quickgeometry/{format}/{smiles}")
-    if res.status_code == 200:
-        return res.content.decode("ascii")
-    if res.status_code == 204:
-        raise NotImplementedError("Unable to obtain geometry.")
-    if res.status_code == 413:
-        msg = res.json()["detail"]
-        raise ValueError(f"{msg}")
-    if res.status_code == 422:
-        msg = res.json()["detail"][0]
-        param = msg["loc"][-1]
-        detail = msg["msg"]
-        raise ValueError(f"{param}: {detail}")
-    raise NotImplementedError("Unknown status code. Please update the python package.")
-
-
-def singlepoint_submit(
-    filecontents: str,
-    level: str,
-    basisset: str,
-    charge: int = 0,
-    multiplicity: int = 1,
-    version: str = None,
+def _base_call(
+    endpoint: str,
+    payload: Dict,
+    version: str,
+    urgent: bool,
+    progress: bool,
+    files: Dict = {},
 ):
-    """Runs a single point calculation on a fixed geometry, specified as file.
-    Returns a token and an estimate in seconds how long this probably will take. The result can be obtained from singlepoint_retrieve() using the token."""
-    level = urllib.parse.quote(level)
-    basisset = urllib.parse.quote(basisset)
+    # entry = time.time()
     res = rq.post(
-        f"{BASEURL}/{version}/singlepoint/{level}/{basisset}/{charge}/{multiplicity}",
-        files={"file": filecontents},
+        f"{BASEURL}/{version}/{endpoint}?urgent={urgent}", json=payload, files=files
     )
     print(res.content)
 
+    # wait for delayed responses
+    if res.status_code == 202:
+        res = res.json()
+        remainder = res["time_to_result"]
+        # now = time.time()
+        time.sleep(remainder)
+        # pbar = tqdm.tqdm(
+        #     total=remainder + (now - entry),
+        #     desc="Waiting",
+        #     bar_format="{desc}: |{bar}| [{elapsed}<{remaining}]",
+        # )
+        # pbar.update(now - entry)
+        # while remainder > 0:
+        #     tosleep = min(remainder, 1)
+        #     time.sleep(tosleep)
+        #     remainder -= 1
+        #     pbar.update(tosleep)
+        # pbar.close()
 
-def canonicalizechemicalformula(sumformula: str, version: str = None) -> str:
-    if version is None:
-        version = "latest"
-    res = rq.get(f"{BASEURL}/{version}/canonicalizechemicalformula/{sumformula}")
-    if res.status_code == 200:
-        return res.json()["chemicalformula"]
-    if res.status_code == 422:
+        token = res["token"]
+        while True:
+            res = rq.post(
+                f"{BASEURL}/{version}/get-results",
+                json={"tokens": [{"token": token}]},
+            )
+            if res.status_code != 202:
+                break
+            time.sleep(res.json()[0]["time_to_result"])
+        res = res.json()[0]
+    else:
+        res = res.json()
+
+    return res
+
+
+def canonical_formula(
+    formula: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"formula": formula}
+    return _base_call("canonical-formula", payload, version, urgent, progress)
+
+
+def canonical_graph(
+    graph: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"graph": graph}
+    return _base_call("canonical-graph", payload, version, urgent, progress)
+
+
+def graph_to_boiling_point(
+    graph: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"graph": graph}
+    return _base_call("graph-to-boiling-point", payload, version, urgent, progress)
+
+
+def graph_to_melting_point(
+    graph: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"graph": graph}
+    return _base_call("graph-to-melting-point", payload, version, urgent, progress)
+
+
+def graph_to_logP(
+    graph: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"graph": graph}
+    return _base_call("graph-to-logP", payload, version, urgent, progress)
+
+
+def graph_to_logD(
+    graph: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"graph": graph}
+    return _base_call("graph-to-logD", payload, version, urgent, progress)
+
+
+def graph_to_pKa(
+    graph: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"graph": graph}
+    return _base_call("graph-to-pKa", payload, version, urgent, progress)
+
+
+def graph_to_formula(
+    graph: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"graph": graph}
+    return _base_call("graph-to-formula", payload, version, urgent, progress)
+
+
+def graph_to_geometry(
+    graph: str,
+    format: str,
+    version: str = "latest",
+    urgent: bool = False,
+    progress: bool = False,
+):
+    payload = {"graph": graph, "format": format}
+    return _base_call("graph-to-geometry", payload, version, urgent, progress)
+
+
+def formula_to_graphs(
+    formula: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"formula": formula}
+    return _base_call("formula-to-graphs", payload, version, urgent, progress)
+
+
+def graph_to_name(
+    graph: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"graph": graph}
+    return _base_call("graph-to-name", payload, version, urgent, progress)
+
+
+def name_to_graph(
+    name: str, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"name": name}
+    return _base_call("name-to-graph", payload, version, urgent, progress)
+
+
+def formula_to_cost(
+    formula: str,
+    basisset: str,
+    version: str = "latest",
+    urgent: bool = False,
+    progress: bool = False,
+):
+    payload = {"formula": formula, "basisset": basisset}
+    return _base_call("formula-to-cost", payload, version, urgent, progress)
+
+
+def graph_to_image(
+    graph: str,
+    format: str,
+    angle: int,
+    version: str = "latest",
+    urgent: bool = False,
+    progress: bool = False,
+):
+    payload = {"graph": graph, "format": format, "angle": angle}
+    return _base_call("graph-to-image", payload, version, urgent, progress)
+
+
+def image_to_graph(
+    image: bytes, version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    return _base_call(
+        "image-to-graph",
+        {},
+        version,
+        urgent,
+        progress,
+        {"file": ("image", image, "image/png")},
+    )
+
+
+# image_to_graph
+
+
+def _extract_error_message(res):
+    try:
         msg = res.json()["detail"]
-        raise ValueError(msg)
-    raise NotImplementedError("Unknown status code. Please update the python package.")
-
-
-def canonicalizesmiles(smiles: str, version: str = None) -> str:
-    if version is None:
-        version = "latest"
-    smiles = urllib.parse.quote(smiles)
-    res = rq.get(f"{BASEURL}/{version}/canonicalizesmiles/{smiles}")
-    if res.status_code == 200:
-        return res.json()["smiles"]
-    if res.status_code == 422:
-        msg = res.json()["detail"]
-        raise ValueError(msg)
-    raise NotImplementedError("Unknown status code. Please update the python package.")
-
-
-def smiles2chemicalformula(smiles: str, version: str = None) -> str:
-    if version is None:
-        version = "latest"
-    smiles = urllib.parse.quote(smiles)
-    res = rq.get(f"{BASEURL}/{version}/smiles2chemicalformula/{smiles}")
-    if res.status_code == 200:
-        return res.json()["chemicalformula"]
-    if res.status_code == 422:
-        msg = res.json()["detail"]
-        raise ValueError(msg)
-    raise NotImplementedError("Unknown status code. Please update the python package.")
+        return msg
+    except:
+        pass
+    try:
+        msg = res.json()["detail"][0]
+        param = msg["loc"][-1]
+        msg = f"Parameter {param}: {msg['msg']}"
+        return msg
+    except:
+        pass
+    raise NotImplementedError()
