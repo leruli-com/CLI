@@ -6,8 +6,6 @@ import os
 
 # import tqdm
 
-__all__ = "quickgeometry canonicalizechemicalformula canonicalizesmiles smiles2chemicalformula".split()
-
 BASEURL = os.getenv("LERULI_BASEURL", "https://api.leruli.com")
 
 
@@ -23,7 +21,6 @@ def _base_call(
     res = rq.post(
         f"{BASEURL}/{version}/{endpoint}?urgent={urgent}", json=payload, files=files
     )
-    print(res.content)
 
     # wait for delayed responses
     if res.status_code == 202:

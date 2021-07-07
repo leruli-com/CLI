@@ -38,6 +38,6 @@ setup(
     packages=find_packages(include=['leruli', 'leruli.*']),
     test_suite='tests',
     tests_require=test_requirements,
-    version='0.1.3',
+    version='0.1.5',
     zip_safe=False,
 )
