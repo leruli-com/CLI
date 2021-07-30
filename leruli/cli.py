@@ -403,8 +403,12 @@ def graph_to_solvation_energy(
             f"# Reference as BibTeX: https://api.leruli.com/{version}/references/{result['reference']}/bibtex"
         )
     
-    printable = [{'Temperature [K]': k, 'Energy of solvation [kcal/mol]': v} for k, v in result["solvation_energies"].items()]
-    print(tabulate.tabulate(printable, headers="keys"))
+    if "detail" in result:
+        print (f"ERROR: {result['detail']['ERROR']}")
+    else:
+        printable = [{'Temperature [K]': k, 'Energy of solvation [kcal/mol]': v} for k, v in result["solvation_energies"].items()]
+        print(tabulate.tabulate(printable, headers="keys"))
+
 # @click.group()
 # def cli11():
 #     pass
