@@ -3,11 +3,12 @@ import urllib
 import requests as rq
 import time
 import os
+import sys
 
 # import tqdm
 
 BASEURL = os.getenv("LERULI_BASEURL", "https://api.leruli.com")
-
+SORRY = "ERROR: Accessing API failed. This is our fault, not yours. Please accept our apologies. We have been notified of this error."
 
 def _base_call(
     endpoint: str,
@@ -50,8 +51,14 @@ def _base_call(
             if res.status_code != 202:
                 break
             time.sleep(res.json()[0]["time_to_result"])
+        if str(res.status_code).startswith("5"):
+            print (SORRY)
+            sys.exit(1)
         res = res.json()[0]
     else:
+        if str(res.status_code).startswith("5"):
+            print (SORRY)
+            sys.exit(1)
         res = res.json()
 
     return res
