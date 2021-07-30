@@ -62,6 +62,14 @@ Examples for command line usage
    $ leruli graph-to-formula "CC(=O)C"
    C3H6O
 
+   $ leruli graph-to-solvation-energy CC water 298,300,400,200
+     Temperature [K]  Energy of solvation [kcal/mol]
+   -----------------  --------------------------------
+                 200  N/A
+                 298  0.8636409650058766
+                 300  0.902919806812065
+                 400  1.9950388437192126
+
 
 Examples for usage in Python
 ----------------------------

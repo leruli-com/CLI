@@ -4,6 +4,7 @@ import click
 import leruli
 import tabulate
 import base64
+from typing import List
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -374,7 +375,36 @@ def graph_to_image(
     with open(filename, "wb") as fh:
         fh.write(base64.b64decode(result["image"]))
 
+@click.group()
+def cli11():
+    pass
 
+
+@cli11.command()
+@click.option("--version", default="latest", help="Request specific API version.")
+@click.option(
+    "--reference", is_flag=True, default=False, help="Print references for the result."
+)
+@click.argument("graph")
+@click.argument("solvent")
+@click.argument("temperatures")
+def graph_to_solvation_energy(
+    graph: str,
+    solvent: str,
+    temperatures: str,
+    reference: bool,
+    version: str,
+):
+    """Estimate the free energy of solvation."""
+    temperatures = [float(_) for _ in  temperatures.split(",")]
+    result = leruli.graph_to_solvation_energy(graph, solvent, temperatures, version)
+    if reference:
+        print(
+            f"# Reference as BibTeX: https://api.leruli.com/{version}/references/{result['reference']}/bibtex"
+        )
+    
+    printable = [{'Temperature [K]': k, 'Energy of solvation [kcal/mol]': v} for k, v in result["solvation_energies"].items()]
+    print(tabulate.tabulate(printable, headers="keys"))
 # @click.group()
 # def cli11():
 #     pass
@@ -418,7 +448,7 @@ cli = click.CommandCollection(
         cli8,
         cli9,
         cli10,
-        # cli11,
+        cli11,
     ],
     context_settings=CONTEXT_SETTINGS,
 )

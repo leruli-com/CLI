@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 import urllib
 import requests as rq
 import time
@@ -143,6 +143,12 @@ def name_to_graph(
 ):
     payload = {"name": name}
     return _base_call("name-to-graph", payload, version, urgent, progress)
+
+def graph_to_solvation_energy(
+    graph: str,  solventname: str, temperatures: List[float], version: str = "latest", urgent: bool = False, progress: bool = False
+):
+    payload = {"graph": graph, "solvent": solventname, "temperatures": temperatures}
+    return _base_call("graph-to-solvation-energy", payload, version, urgent, progress)
 
 
 def formula_to_cost(
