@@ -375,6 +375,7 @@ def graph_to_image(
     with open(filename, "wb") as fh:
         fh.write(base64.b64decode(result["image"]))
 
+
 @click.group()
 def cli11():
     pass
@@ -396,18 +397,22 @@ def graph_to_solvation_energy(
     version: str,
 ):
     """Estimate the free energy of solvation."""
-    temperatures = [float(_) for _ in  temperatures.split(",")]
+    temperatures = [float(_) for _ in temperatures.split(",")]
     result = leruli.graph_to_solvation_energy(graph, solvent, temperatures, version)
     if reference:
         print(
             f"# Reference as BibTeX: https://api.leruli.com/{version}/references/{result['reference']}/bibtex"
         )
-    
+
     if "detail" in result:
-        print (f"ERROR: {result['detail']['ERROR']}")
+        print(f"ERROR: {result['detail']['ERROR']}")
     else:
-        printable = [{'Temperature [K]': k, 'Energy of solvation [kcal/mol]': v} for k, v in result["solvation_energies"].items()]
+        printable = [
+            {"Temperature [K]": k, "Energy of solvation [kcal/mol]": v}
+            for k, v in result["solvation_energies"].items()
+        ]
         print(tabulate.tabulate(printable, headers="keys"))
+
 
 # @click.group()
 # def cli11():

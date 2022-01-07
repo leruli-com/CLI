@@ -10,6 +10,7 @@ import sys
 BASEURL = os.getenv("LERULI_BASEURL", "https://api.leruli.com")
 SORRY = "ERROR: Accessing API failed. This is our fault, not yours. Please accept our apologies. We have been notified of this error."
 
+
 def _base_call(
     endpoint: str,
     payload: Dict,
@@ -18,50 +19,53 @@ def _base_call(
     progress: bool,
     files: Dict = {},
 ):
-    # entry = time.time()
-    res = rq.post(
-        f"{BASEURL}/{version}/{endpoint}?urgent={urgent}", json=payload, files=files
-    )
+    try:
+        # entry = time.time()
+        res = rq.post(
+            f"{BASEURL}/{version}/{endpoint}?urgent={urgent}", json=payload, files=files
+        )
 
-    # wait for delayed responses
-    if res.status_code == 202:
-        res = res.json()
-        remainder = res["time_to_result"]
-        # now = time.time()
-        time.sleep(remainder)
-        # pbar = tqdm.tqdm(
-        #     total=remainder + (now - entry),
-        #     desc="Waiting",
-        #     bar_format="{desc}: |{bar}| [{elapsed}<{remaining}]",
-        # )
-        # pbar.update(now - entry)
-        # while remainder > 0:
-        #     tosleep = min(remainder, 1)
-        #     time.sleep(tosleep)
-        #     remainder -= 1
-        #     pbar.update(tosleep)
-        # pbar.close()
+        # wait for delayed responses
+        if res.status_code == 202:
+            res = res.json()
+            remainder = res["time_to_result"]
+            # now = time.time()
+            time.sleep(remainder)
+            # pbar = tqdm.tqdm(
+            #     total=remainder + (now - entry),
+            #     desc="Waiting",
+            #     bar_format="{desc}: |{bar}| [{elapsed}<{remaining}]",
+            # )
+            # pbar.update(now - entry)
+            # while remainder > 0:
+            #     tosleep = min(remainder, 1)
+            #     time.sleep(tosleep)
+            #     remainder -= 1
+            #     pbar.update(tosleep)
+            # pbar.close()
 
-        token = res["token"]
-        while True:
-            res = rq.post(
-                f"{BASEURL}/{version}/get-results",
-                json={"tokens": [{"token": token}]},
-            )
-            if res.status_code != 202:
-                break
-            time.sleep(res.json()[0]["time_to_result"])
-        if str(res.status_code).startswith("5"):
-            print (SORRY)
-            sys.exit(1)
-        res = res.json()[0]
-    else:
-        if str(res.status_code).startswith("5"):
-            print (SORRY)
-            sys.exit(1)
-        res = res.json()
+            token = res["token"]
+            while True:
+                res = rq.get(
+                    f"{BASEURL}/{version}/result/{token}",
+                )
+                if res.status_code != 202:
+                    break
+                time.sleep(res.json()["time_to_result"])
+            if str(res.status_code).startswith("5"):
+                print(SORRY)
+                sys.exit(1)
+            res = res.json()
+        else:
+            if str(res.status_code).startswith("5"):
+                print(SORRY)
+                sys.exit(1)
+            res = res.json()
 
-    return res
+        return res
+    except:
+        print(SORRY)
+        sys.exit(1)
 
 
 def canonical_formula(
@@ -151,11 +155,19 @@ def name_to_graph(
     payload = {"name": name}
     return _base_call("name-to-graph", payload, version, urgent, progress)
 
+
 def graph_to_solvation_energy(
-    graph: str,  solventname: str, temperatures: List[float], version: str = "latest", urgent: bool = False, progress: bool = False
+    graph: str,
+    solventname: str,
+    temperatures: List[float],
+    version: str = "latest",
+    urgent: bool = False,
+    progress: bool = False,
 ):
     payload = {"graph": graph, "solvent": solventname, "temperatures": temperatures}
-    return _base_call("graph-to-solvation-energy", payload, version, urgent, progress)
+    d = _base_call("graph-to-solvation-energy", payload, version, urgent, progress)
+    print(d)
+    return d
 
 
 def formula_to_cost(
