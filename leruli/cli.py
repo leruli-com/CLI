@@ -386,6 +386,7 @@ def cli11():
 @click.option(
     "--reference", is_flag=True, default=False, help="Print references for the result."
 )
+@click.option("--quiet", is_flag=True, default=False, help="Hide progress bar.")
 @click.argument("graph")
 @click.argument("solvent")
 @click.argument("temperatures")
@@ -395,10 +396,13 @@ def graph_to_solvation_energy(
     temperatures: str,
     reference: bool,
     version: str,
+    quiet: bool,
 ):
     """Estimate the free energy of solvation."""
     temperatures = [float(_) for _ in temperatures.split(",")]
-    result = leruli.graph_to_solvation_energy(graph, solvent, temperatures, version)
+    result = leruli.graph_to_solvation_energy(
+        graph, solvent, temperatures, version, progress=not quiet
+    )
     if reference:
         print(
             f"# Reference as BibTeX: https://api.leruli.com/{version}/references/{result['reference']}/bibtex"

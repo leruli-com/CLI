@@ -3,6 +3,7 @@ import urllib
 import requests as rq
 import time
 import os
+import tqdm
 import sys
 
 # import tqdm
@@ -20,38 +21,48 @@ def _base_call(
     files: Dict = {},
 ):
     try:
-        # entry = time.time()
         res = rq.post(
             f"{BASEURL}/{version}/{endpoint}?urgent={urgent}", json=payload, files=files
         )
 
+        pbar = None
         # wait for delayed responses
         if res.status_code == 202:
-            res = res.json()
-            remainder = res["time_to_result"]
-            # now = time.time()
-            time.sleep(remainder)
-            # pbar = tqdm.tqdm(
-            #     total=remainder + (now - entry),
-            #     desc="Waiting",
-            #     bar_format="{desc}: |{bar}| [{elapsed}<{remaining}]",
-            # )
-            # pbar.update(now - entry)
-            # while remainder > 0:
-            #     tosleep = min(remainder, 1)
-            #     time.sleep(tosleep)
-            #     remainder -= 1
-            #     pbar.update(tosleep)
-            # pbar.close()
-
-            token = res["token"]
+            starttime = time.time()
             while True:
+                res = res.json()
+                token = res["token"]
+                remainder = res["time_to_result"]
+
+                if progress:
+                    if pbar is None:
+                        pbar = tqdm.tqdm(
+                            total=remainder,
+                            desc="Waiting",
+                            bar_format="{desc}: |{bar}| [{elapsed}<{remaining}]",
+                        )
+                    else:
+                        pbar.total = remainder + pbar.n
+                        pbar.update(0)
+
+                early = remainder - 3
+                while remainder > 0 and remainder > early:
+                    tosleep = min(remainder, 1)
+                    time.sleep(tosleep)
+                    remainder -= 1
+                    if progress:
+                        pbar.update(tosleep)
+
                 res = rq.get(
                     f"{BASEURL}/{version}/result/{token}",
                 )
                 if res.status_code != 202:
+                    if progress:
+                        pbar.total = pbar.n
+                        pbar.update(0)
+                        pbar.close()
                     break
-                time.sleep(res.json()["time_to_result"])
+                # time.sleep(res.json()["time_to_result"])
             if str(res.status_code).startswith("5"):
                 print(SORRY)
                 sys.exit(1)
@@ -64,6 +75,7 @@ def _base_call(
 
         return res
     except:
+        raise
         print(SORRY)
         sys.exit(1)
 
@@ -165,9 +177,7 @@ def graph_to_solvation_energy(
     progress: bool = False,
 ):
     payload = {"graph": graph, "solvent": solventname, "temperatures": temperatures}
-    d = _base_call("graph-to-solvation-energy", payload, version, urgent, progress)
-    print(d)
-    return d
+    return _base_call("graph-to-solvation-energy", payload, version, urgent, progress)
 
 
 def formula_to_cost(
