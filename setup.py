@@ -4,40 +4,42 @@
 
 from setuptools import setup, find_packages
 
-with open('README.rst') as readme_file:
+with open("README.rst") as readme_file:
     readme = readme_file.read()
 
-requirements = ['Click>=7.0', 'requests', 'tabulate' ]
+requirements = ["Click>=7.0", "requests", "tabulate", "minio", "docker"]
 
-test_requirements = ['pytest>=3', ]
+test_requirements = [
+    "pytest>=3",
+]
 
 setup(
     author="leruli.com",
-    author_email='info@leruli.com',
-    python_requires='>=3.6',
+    author_email="info@leruli.com",
+    python_requires=">=3.6",
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
-        'Intended Audience :: Developers',
-        'Natural Language :: English',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
+        "Development Status :: 2 - Pre-Alpha",
+        "Intended Audience :: Developers",
+        "Natural Language :: English",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     description="Use leruli.com from command line and Python code.",
     entry_points={
-        'console_scripts': [
-            'leruli=leruli.cli:main',
+        "console_scripts": [
+            "leruli=leruli.cli:main",
         ],
     },
     install_requires=requirements,
     long_description=readme,
     include_package_data=True,
-    keywords='leruli',
-    name='leruli',
-    packages=find_packages(include=['leruli', 'leruli.*']),
-    test_suite='tests',
+    keywords="leruli",
+    name="leruli",
+    packages=find_packages(include=["leruli", "leruli.*"]),
+    test_suite="tests",
     tests_require=test_requirements,
-    version='0.1.8',
+    version="0.1.8",
     zip_safe=False,
 )

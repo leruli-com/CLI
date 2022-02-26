@@ -1,7 +1,14 @@
 from typing import Dict, List
-import urllib
+import gzip
 import requests as rq
 import time
+import tarfile
+import docker
+import os.path
+import io
+from minio import Minio
+import uuid
+import requests as rq
 import os
 import tqdm
 import sys
@@ -230,3 +237,156 @@ def _extract_error_message(res):
     except:
         pass
     raise NotImplementedError()
+
+
+def task_submit(
+    directory: str,
+    code: str,
+    version: str,
+    command: str,
+    cores: int = 1,
+    memorymb: int = 4000,
+    timeseconds: int = 24 * 60 * 60,
+):
+    if not "LERULI_API_SECRET" in os.environ:
+        print(
+            "This feature is paid. Please contact info@leruli.com to obtain an API secret."
+        )
+        return None
+    api_secret = os.getenv("LERULI_API_SECRET")
+
+    if not (
+        "LERULI_S3_ACCESS" in os.environ
+        and "LERULI_S3_SECRET" in os.environ
+        and "LERULI_S3_SERVER" in os.environ
+    ):
+        print(
+            "Please configure the environment variables LERULI_S3_[ACCESS|SECRET|SERVER]."
+        )
+        return None
+    s3_access = os.getenv("LERULI_S3_ACCESS")
+    s3_secret = os.getenv("LERULI_S3_SECRET")
+    s3_server = os.getenv("LERULI_S3_SERVER")
+
+    jobid = str(uuid.uuid4())
+
+    s3_client = Minio(
+        s3_server.split("/")[-1],
+        access_key=s3_access,
+        secret_key=s3_secret,
+        secure=s3_server.startswith("https"),
+    )
+
+    bucket = f"job-{jobid}"
+    s3_client.make_bucket(bucket)
+
+    # in-memory tar file
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+        tar.add(".", arcname=os.path.basename("."))
+
+        runscript = io.BytesIO(("#!/bin/bash\n" + " ".join(command)).encode("ascii"))
+        tarinfo = tarfile.TarInfo(name="run.sh")
+        tarinfo.size = runscript.getbuffer().nbytes
+        tar.addfile(tarinfo=tarinfo, fileobj=runscript)
+    buffer.seek(0)
+
+    # upload
+    s3_client.put_object(bucket, "run.tgz", buffer, buffer.getbuffer().nbytes)
+
+    # local handle
+    with open(f"{directory}/leruli.job", "w") as fh:
+        fh.write(f"{jobid}\n")
+
+    # submit to API
+    codeversion = f"{code}:{version}"
+    payload = {
+        "secret": api_secret,
+        "jobid": jobid,
+        "codeversion": codeversion,
+        "cores": cores,
+        "memorymb": memorymb,
+        "timelimit": timeseconds,
+    }
+    rq.post("https://api.leruli.com/v22_1/task-submit", json=payload)
+    return jobid
+
+
+def task_status(jobid: str):
+    if not "LERULI_API_SECRET" in os.environ:
+        print(
+            "This feature is paid. Please contact info@leruli.com to obtain an API secret."
+        )
+        return None
+    api_secret = os.getenv("LERULI_API_SECRET")
+
+    payload = {
+        "secret": api_secret,
+        "jobid": jobid,
+    }
+    status = rq.post("https://api.leruli.com/v22_1/task-status", json=payload).json()
+    if type(status) == list:
+        return ": ".join(status.json())
+    return status
+
+
+def task_cancel(jobid: str):
+    if not "LERULI_API_SECRET" in os.environ:
+        print(
+            "This feature is paid. Please contact info@leruli.com to obtain an API secret."
+        )
+        return None
+    api_secret = os.getenv("LERULI_API_SECRET")
+
+    payload = {
+        "secret": api_secret,
+        "jobid": jobid,
+    }
+    status = rq.post("https://api.leruli.com/v22_1/task-cancel", json=payload)
+    return status.json()
+
+
+def task_publish_code(code: str, version: str):
+    if not "LERULI_API_SECRET" in os.environ:
+        print(
+            "This feature is paid. Please contact info@leruli.com to obtain an API secret."
+        )
+        return None
+    api_secret = os.getenv("LERULI_API_SECRET")
+
+    client = docker.from_env()
+    image = client.images.get(f"{code}:{version}")
+    cache = io.BytesIO()
+    for chunk in image.save():
+        cache.write(chunk)
+    cache.seek(0)
+    tgz = gzip.compress(cache.read())
+
+    client.fput(f"code-{api_secret}", f"{code}-{version}.tgz", tgz, len(tgz))
+
+
+def task_prune(jobid: str):
+    if not (
+        "LERULI_S3_ACCESS" in os.environ
+        and "LERULI_S3_SECRET" in os.environ
+        and "LERULI_S3_SERVER" in os.environ
+    ):
+        print(
+            "Please configure the environment variables LERULI_S3_[ACCESS|SECRET|SERVER]."
+        )
+        return None
+    s3_access = os.getenv("LERULI_S3_ACCESS")
+    s3_secret = os.getenv("LERULI_S3_SECRET")
+    s3_server = os.getenv("LERULI_S3_SERVER")
+
+    s3_client = Minio(
+        s3_server.split("/")[-1],
+        access_key=s3_access,
+        secret_key=s3_secret,
+        secure=s3_server.startswith("https"),
+    )
+
+    bucket = f"job-{jobid}"
+    for obj in s3_client.list_objects(bucket, recursive=True):
+        s3_client.remove_object(bucket, obj.object_name)
+    s3_client.remove_bucket(bucket)

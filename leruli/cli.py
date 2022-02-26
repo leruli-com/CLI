@@ -1,6 +1,7 @@
 """Console script for leruli."""
 import sys
 import click
+import os
 import leruli
 import tabulate
 import base64
@@ -418,31 +419,83 @@ def graph_to_solvation_energy(
         print(tabulate.tabulate(printable, headers="keys"))
 
 
-# @click.group()
-# def cli11():
-#     pass
+@click.group()
+def group_task_submit():
+    pass
 
 
-# @cli11.command()
-# @click.option("--version", default="latest", help="Request specific API version.")
-# @click.option(
-#     "--reference", is_flag=True, default=False, help="Print references for the result."
-# )
-# @click.argument("filename")
-# def image_to_graph(
-#     filename: str,
-#     reference: bool,
-#     version: str,
-# ):
-#     """Detect a molecule in an image."""
-#     with open(filename, "rb") as fh:
-#         content = fh.read()
-#     result = leruli.image_to_graph(content, version)
-#     if reference:
-#         print(
-#             f"# Reference as BibTeX: https://api.leruli.com/{version}/references/{result['reference']}/bibtex"
-#         )
-#     print(result)
+@group_task_submit.command()
+@click.option("--memory", default=4000, help="Memory limit in MB.")
+@click.option("--time", default=60 * 24, help="Time limit in minutes.")
+@click.option("--cores", default=1, help="Number of cores to allocate.")
+@click.argument("code")
+@click.argument("version")
+@click.argument("command", nargs=-1, required=True)
+def task_submit(
+    memory: int, time: int, cores: int, code: str, version: str, command: str
+):
+    """Submit a job to the Leruli queue. This is a paid feature requiring an API secret, which can be obtained from info@leruli.com."""
+
+    jobid = leruli.task_submit(".", code, version, command, cores, memory, time * 60)
+    if jobid is not None:
+        print(jobid)
+
+
+@click.group()
+def group_task_status():
+    pass
+
+
+@group_task_status.command()
+@click.argument("jobid", required=False)
+def task_status(jobid: str):
+    """Get the status of a job in the queue."""
+    if jobid is None:
+        with open("leruli.job") as fh:
+            jobid = fh.read().strip()
+    status = leruli.task_status(jobid)
+    print(status)
+
+
+@click.group()
+def group_task_cancel():
+    pass
+
+
+@group_task_cancel.command()
+@click.argument("jobid", required=False)
+def task_cancel(jobid: str):
+    """Cancels a job in the queue."""
+    if jobid is None:
+        with open("leruli.job") as fh:
+            jobid = fh.read().strip()
+    status = leruli.task_cancel(jobid)
+    print(status)
+
+
+@click.group()
+def group_task_prune():
+    pass
+
+
+@group_task_prune.command()
+@click.argument("jobid")
+def task_prune(jobid: str):
+    """Deletes the input/output files of a job."""
+    leruli.task_prune(jobid)
+
+
+@click.group()
+def group_task_publish_code():
+    pass
+
+
+@group_task_publish_code.command()
+@click.argument("code")
+@click.argument("version")
+def task_publish_code(code: str, version: str):
+    """Uploads a local docker image to the queue."""
+    leruli.task_publish_code()
 
 
 cli = click.CommandCollection(
@@ -462,6 +515,11 @@ cli = click.CommandCollection(
         cli9,
         cli10,
         cli11,
+        group_task_submit,
+        group_task_status,
+        group_task_cancel,
+        group_task_publish_code,
+        group_task_prune,
     ],
     context_settings=CONTEXT_SETTINGS,
 )
