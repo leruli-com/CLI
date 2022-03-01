@@ -1,6 +1,6 @@
-import internal
-from graph import *
-from task import *
+from . import internal
+from .graph import *
+from .task import *
 
 
 def canonical_formula(

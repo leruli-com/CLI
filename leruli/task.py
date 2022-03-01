@@ -1,5 +1,5 @@
 from sys import intern
-import internal
+from . import internal
 import os
 import io
 import tarfile

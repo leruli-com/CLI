@@ -1,4 +1,4 @@
-import internal
+from . import internal
 from typing import List
 
 
