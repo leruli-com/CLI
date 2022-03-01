@@ -436,9 +436,17 @@ def task_submit(
 ):
     """Submit a job to the Leruli queue. This is a paid feature requiring an API secret, which can be obtained from info@leruli.com."""
 
-    jobid = leruli.task_submit(".", code, version, command, cores, memory, time * 60)
+    try:
+        jobid = leruli.task_submit(
+            ".", code, version, command, cores, memory, time * 60
+        )
+    except ValueError as e:
+        print(f"Not submitted: {str(e)}")
+        sys.exit(1)
     if jobid is not None:
         print(jobid)
+    else:
+        sys.exit(1)
 
 
 @click.group()
@@ -455,6 +463,21 @@ def task_status(jobid: str):
             jobid = fh.read().strip()
     status = leruli.task_status(jobid)
     print(status)
+
+
+@click.group()
+def group_task_get():
+    pass
+
+
+@group_task_get.command()
+@click.argument("bucket", required=False)
+def task_get(bucket: str):
+    """Get the status of a job in the queue."""
+    if bucket is None:
+        with open("leruli.bucket") as fh:
+            bucket = fh.read().strip()
+    leruli.task_get(".", bucket)
 
 
 @click.group()
@@ -479,10 +502,17 @@ def group_task_prune():
 
 
 @group_task_prune.command()
-@click.argument("jobid")
-def task_prune(jobid: str):
-    """Deletes the input/output files of a job."""
-    leruli.task_prune(jobid)
+@click.argument("bucket", required=False)
+def task_prune(bucket: str):
+    """Deletes the input/output files of a bucket."""
+    if bucket is None:
+        with open("leruli.bucket") as fh:
+            bucket = fh.read().strip()
+    try:
+        leruli.task_prune(bucket)
+    except:
+        print("Pruning failed. Bucket already pruned or wrong S3 credentials.")
+        sys.exit(1)
 
 
 @click.group()
@@ -517,9 +547,10 @@ cli = click.CommandCollection(
         cli11,
         group_task_submit,
         group_task_status,
-        group_task_cancel,
+        # group_task_cancel,
         group_task_publish_code,
         group_task_prune,
+        group_task_get,
     ],
     context_settings=CONTEXT_SETTINGS,
 )

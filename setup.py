@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 with open("README.rst") as readme_file:
     readme = readme_file.read()
 
-requirements = ["Click>=7.0", "requests", "tabulate", "minio", "docker"]
+requirements = ["Click>=7.0", "requests", "tabulate", "minio", "docker", "tqdm"]
 
 test_requirements = [
     "pytest>=3",
@@ -40,6 +40,6 @@ setup(
     packages=find_packages(include=["leruli", "leruli.*"]),
     test_suite="tests",
     tests_require=test_requirements,
-    version="0.1.8",
+    version="0.1.9",
     zip_safe=False,
 )
