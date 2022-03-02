@@ -22,6 +22,7 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 
 import leruli
+import sphinx_material
 
 # -- General configuration ---------------------------------------------
 
@@ -46,7 +47,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Leruli CLI'
+project = 'Leruli'
 copyright = "2021, leruli.com"
 author = "leruli.com"
 
@@ -70,9 +71,13 @@ language = None
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+# Add any paths that contain custom static files (such as style sheets) here,
+# relative to this directory. They are copied after the builtin static files,
+# so a file named "default.css" will overwrite the builtin "default.css".
+html_static_path = ['_static']
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+# pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -83,19 +88,54 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_show_sourcelink = True
+html_sidebars = {
+    "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
+}
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+extensions.append("sphinx_material")
+html_theme_path = sphinx_material.html_theme_path()
+html_context = sphinx_material.get_html_context()
+html_theme = "sphinx_material"
 
+# Html logo in drawer.
+# Fit in the drawer at the width of image is 240 px.
+html_logo = '_static/images/logomod.png'
+
+# material theme options (see theme.conf for more information)
+html_theme_options = {
+    # "base_url": "http://bashtage.github.io/sphinx-material/",
+    # "repo_url": "https://github.com/bashtage/sphinx-material/",
+    # "repo_name": "Material for Sphinx",
+    # "google_analytics_account": "UA-XXXXX",
+    "html_minify": False,
+    "html_prettify": True,
+    "css_minify": True,
+    # "logo_icon": "_static/images/logomod.png",
+    # "repo_type": "github",
+    "globaltoc_depth": 2,
+    "color_primary": "white",
+    "color_accent": "cyan",
+    # "touch_icon": "images/apple-icon-152x152.png",
+    "theme_color": "#2196f3",
+    "master_doc": False,
+    "nav_links": [
+        {"href": "https://leruli.com",
+         "internal": False,
+         "title": "Leruli Webpage"},
+        {
+            "href": "https://api.leruli.com",
+            "internal": False,
+            "title": "API",
+        },
+    ],
+    "table_classes": ["plain"],
+}
 
 # -- Options for HTMLHelp output ---------------------------------------
 
@@ -128,7 +168,7 @@ latex_elements = {
 # [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'leruli.tex',
-     'Leruli CLI Documentation',
+     'Leruli Documentation',
      'leruli.com', 'manual'),
 ]
 
@@ -139,7 +179,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc, 'leruli',
-     'Leruli CLI Documentation',
+     'Leruli Documentation',
      [author], 1)
 ]
 
@@ -151,7 +191,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'leruli',
-     'Leruli CLI Documentation',
+     'Leruli Documentation',
      author,
      'leruli',
      'One line description of project.',

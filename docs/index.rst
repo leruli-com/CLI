@@ -5,12 +5,10 @@ Welcome to Leruli CLI's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   readme
    installation
-   usage
-   modules
-   contributing
-   history
+   readme
+   queue
+   compute
 
 Indices and tables
 ==================

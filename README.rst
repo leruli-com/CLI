@@ -81,14 +81,14 @@ Load the library
 
 Get a SMILES string from a molecule name.
 
-.. code-block:: 
+.. code-block:: python
 
    >>> leruli.name_to_graph("acetone")
    {'graph': 'CC(=O)C', 'reference': 'wikidata'}
 
 Get a geometry for given molecular graph.
 
-.. code-block:: 
+.. code-block:: python
 
    >>> print(leruli.graph_to_geometry('CC(=O)C', "XYZ")['geometry'])
    10
@@ -106,7 +106,7 @@ Get a geometry for given molecular graph.
 
 Get the sum formula from a molecular graph.
 
-.. code-block:: 
+.. code-block:: python
    
    >>> leruli.graph_to_formula("CC=O")
    {'formula': 'C2H4O', 'reference': 'M2013,rdkit'}
