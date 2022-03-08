@@ -9,6 +9,7 @@ Welcome to Leruli CLI's documentation!
    readme
    queue
    compute
+   leruli
 
 Indices and tables
 ==================

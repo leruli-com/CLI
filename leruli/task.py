@@ -18,6 +18,7 @@ def task_submit(
     memorymb: int = 4000,
     timeseconds: int = 24 * 60 * 60,
 ):
+    """Submits a given directory content as job to Leruli Queue/Cloud."""
     api_secret = internal.get_api_secret()
     if api_secret is None:
         return
@@ -71,6 +72,7 @@ def task_submit(
 
 
 def task_status(jobid: str):
+    """Queries the status of a job at Leruli Queue/Cloud."""
     api_secret = internal.get_api_secret()
 
     payload = {
@@ -84,6 +86,7 @@ def task_status(jobid: str):
 
 
 def task_get(directory: str, bucket: str):
+    """Downloads the input and output files of a Leruli Queue/Cloud task into a directory."""
     s3_client = internal.get_s3_client()
     for obj in s3_client.list_objects(bucket):
         object = obj.object_name
@@ -98,6 +101,7 @@ def task_get(directory: str, bucket: str):
 
 
 def task_cancel(jobid: str):
+    """Cancels a task on Leruli Queue/Cloud."""
     api_secret = internal.get_api_secret()
     payload = {
         "secret": api_secret,
@@ -108,6 +112,7 @@ def task_cancel(jobid: str):
 
 
 def task_publish_code(code: str, version: str):
+    """Uploads a local docker image to use with Leruli Queue/Cloud."""
     s3_client = internal.get_s3_client()
     api_secret = internal.get_api_secret()
 
@@ -123,6 +128,7 @@ def task_publish_code(code: str, version: str):
 
 
 def task_prune(bucket: str):
+    """Irreversibly deletes the Leruli Queue/Cloud store of input and output files."""
     s3_client = internal.get_s3_client()
 
     for obj in s3_client.list_objects(bucket, recursive=True):

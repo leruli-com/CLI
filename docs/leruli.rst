@@ -1,27 +1,47 @@
-leruli package
-==============
+leruli Python package
+=====================
 
-Submodules
-----------
+You can install the ``leruli`` Python package via
 
-leruli.cli module
------------------
+.. code-block:: console
 
-.. automodule:: leruli.cli
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    $ pip install -U leruli
 
-leruli.leruli module
---------------------
+and make it available in your script via ``import leruli``.
 
-.. automodule:: leruli.leruli
-   :members:
-   :undoc-members:
-   :show-inheritance:
+Cheminformatics functions
+-------------------------
 
-Module contents
----------------
+.. autosummary::
+   :nosignatures:
+
+   leruli.canonical_formula 
+   leruli.canonical_graph
+   leruli.graph_to_formula
+   leruli.graph_to_geometry
+   leruli.graph_to_solvation_energy
+
+Chemical space functions
+------------------------
+
+
+.. autosummary::
+   :nosignatures:
+
+   leruli.formula_to_graphs
+
+Leruli Queue/Cloud functions
+----------------------------
+
+.. autosummary::
+   :nosignatures:
+
+   leruli.task_submit
+   leruli.task_status
+   leruli.task_cancel
+
+All functions
+-------------
 
 .. automodule:: leruli
    :members:

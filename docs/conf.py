@@ -93,15 +93,19 @@ todo_include_todos = False
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_show_sourcelink = True
+html_show_sourcelink = False
 html_sidebars = {
     "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
 }
 
 extensions.append("sphinx_material")
+extensions.append("numpydoc")
 html_theme_path = sphinx_material.html_theme_path()
 html_context = sphinx_material.get_html_context()
 html_theme = "sphinx_material"
+html_css_files = [
+    'css/custom.css',
+]
 
 # Html logo in drawer.
 # Fit in the drawer at the width of image is 240 px.
@@ -142,7 +146,7 @@ html_theme_options = {
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'lerulidoc'
 
-
+    
 # -- Options for LaTeX output ------------------------------------------
 
 latex_elements = {
@@ -199,4 +203,4 @@ texinfo_documents = [
 ]
 
 
-
+add_module_names = False
