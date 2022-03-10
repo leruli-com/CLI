@@ -1,18 +1,12 @@
-Welcome to Leruli CLI's documentation!
-======================================
-
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-   installation
-   readme
-   queue
-   compute
-   leruli
+   AAA103AAA <cli>
+   AAA101AAA <queue>
+   AAA102AAA <compute>
+   AAA100AAA <python>
 
-Indices and tables
-==================
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+
+.. |pythonlogo| image:: _static/images/python-brands.png
+   :width: 30
+   :alt: Python logo

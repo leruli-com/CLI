@@ -1,9 +1,15 @@
-==========
-Leruli-Queue
-==========
+|queuelogo| Leruli-Queue
+========================
+
+.. hint:: Please feel free to `✎ improve this page <https://github.com/leruli-com/CLI/edit/master/docs/queue.rst>`_ or to `🕮 ask questions about this page <https://github.com/leruli-com/CLI/discussions>`_.
+
+.. |queuelogo| image:: _static/images/boxes-stacked-solid.png
+  :width: 30
+  :alt: queue logo
+
 
 API access
-########
+##########
 
 Every group of users (e.g. a research group or a division within a company) has a *group token*, which is meant to be shared within the group, but not outside thereof. Every user within the group has an API secret, which is only to be known by that one user and must not be shared with other users (within or outside the group). These tokens serve different purposes: while the group token allows to see group activity (read access), the API secret is required to create new (chargable) tasks or calculations (write access).
 
@@ -17,7 +23,7 @@ Storage is provided as S3 object storage, for which the server address, the acce
 In total, the following environment variables should be defined for every user wishing to interact with the paid features of leruli via our command line applications: LERULI_API_SECRET, LERULI_S3_ACCESS, LERULI_S3_SECRET, LERULI_S3_SERVER. If you prefer to implement your own client tools, you can either use our python module *leruli* or interface the API directly via https://api.leruli.com
 
 Set-Up and Security
-########
+###################
 
 See Leruli Compute: Set-Up and Security.
 
@@ -34,7 +40,7 @@ Take that token and place it in the configuration file for the client.
 When setting up storage, make sure the S3 object storage does not allow listing all buckets, since the security model of input and output data is designed around unguessable bucket names. Depending on your threat model, it might be acceptable to share S3 credentials within one group, as accessing other user's data requires knowledge of the corresponding bucket.
 
 User management
-########
+###############
 
 To create a new user (i.e. API token), use
 
@@ -54,7 +60,7 @@ which will be effective immediately. Their corresponding jobs and data will be k
 
 
 Adding a Node
-########
+#############
 
 Docker
 **********
@@ -79,7 +85,7 @@ Stop the Docker deamon via
 You are now ready to set up the compute node!
 
 Creating a Compute User (as root)
-********************
+**********************************
 
 To have a homogenous setup across different nodes, the easiest
 is to add a new user under which all computations will be executed.
@@ -116,7 +122,7 @@ Finally, add the following two lines to the `.bashrc` of the user leruli in `/ho
 With the compute user `leruli` set up, we are now ready to finally connect the node to the scheduler.
 
 Software Setup (as user leruli)
-******************
+*******************************
 
 First, login as the new compute user `leruli`
 
@@ -150,7 +156,7 @@ Check whether Docker is actually running via
 
 
 Connecting the Node (as root)
-******************
+*****************************
 
 In order to connect the node, switch to `root` via
 
@@ -178,7 +184,7 @@ If the connection was not succesful, you will see the command line prompt again.
 Congratulations! Your node is now connected to the scheduler.
 
 Software management
-########
+####################
 
 All software is run from containers. You can prepare a new container with a local docker environment on your machine (rootless docker is sufficient). Docker containers provide a reproducible way of packaging software in a manner that does not interfere with the host operating system. This allows you to package software even if we do not have access to the source. A docker container is defined by a Dockerfile, which is similar in spirit to a bash script setting up the environment. There are numerous resources how to build a docker container, e.g. TUTORIALS HERE. Note that we do not provide support for writing Dockerfiles, except for cases once a Dockerfile you prepared that runs on your computer does not work via Leruli, we will help.
 
@@ -203,7 +209,7 @@ We provide a number of preconfigured software packages already prepared for use 
 We will make them available for you during onboarding.
 
 Job Submission
-########
+##############
 
 
 - command line stuff

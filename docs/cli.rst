@@ -1,6 +1,9 @@
 |clilogo| Command Line Interface
 ================================
 
+.. hint:: Please feel free to `✎ improve this page <https://github.com/leruli-com/CLI/edit/master/docs/cli.rst>`_ or to `🕮 ask questions about this page <https://github.com/leruli-com/CLI/discussions>`_.
+
+
 .. highlight:: shell
 
 Installation

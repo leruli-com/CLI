@@ -7,10 +7,20 @@ dt.sig-object {
 }
 dt.sig-object > span.sig-name {
 	font-weight: bold;
+	color: #103d5c;
 }
 .sig-param > span.default_value {
 	color: #666;
 }
 dd, dd p {
 	margin-top: 0!important;
+}
+.md-nav__item {
+	margin-left: 1.5em!important;
+}
+.toctree-wrapper.compound li {
+	margin-left: 1.5em!important;
+}
+.md-typeset a {
+	color: #103d5c;
 }
