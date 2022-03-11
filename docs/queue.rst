@@ -111,13 +111,18 @@ Create such a directory via:
 
 .. hint:: Don't forget to change the ownership to the user leruli via `sudo chown leruli:leruli /data/leruli/ -R`
 
-Finally, add the following two lines to the `.bashrc` of the user leruli in `/home/leruli/.bashrc`:
+Now, add the following two lines to the `.bashrc` of the user leruli in `/home/leruli/.bashrc`:
 
 .. code-block:: bash
 
     export XDG_RUNTIME_DIR="/run/user/$UID"
     export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
 
+Finally, enable user lingering for the user `leruli` to enable the startup of the rootless docker daemon later in the procedure.
+
+.. code-block:: bash
+
+    sudo loginctl enable-linger leruli
 
 With the compute user `leruli` set up, we are now ready to finally connect the node to the scheduler.
 
