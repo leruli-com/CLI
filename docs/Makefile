@@ -22,3 +22,4 @@ help:
 	find _build/html/ -type f -exec sed -i 's#AAA101AAA#<img alt="Python logo" src="_images/boxes-stacked-solid.png" style="width: 30px;padding-right:0.2em;vertical-align:bottom">Leruli Queue#' {} \;
 	find _build/html/ -type f -exec sed -i 's#AAA102AAA#<img alt="Python logo" src="_images/server-solid.png" style="width: 30px;padding-right:0.2em;vertical-align:bottom">Leruli Compute#' {} \;
 	find _build/html/ -type f -exec sed -i 's#AAA103AAA#<img alt="Python logo" src="_images/terminal-solid.png" style="width: 30px;padding-right:0.2em;vertical-align:bottom">CLI#' {} \;
+	find _build/html/ -type f -exec sed -i 's#.*fonts.googleapis.com.*##' {} \;

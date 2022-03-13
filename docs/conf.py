@@ -23,6 +23,9 @@ sys.path.insert(0, os.path.abspath('..'))
 
 import leruli
 import sphinx_material
+import sphinx_click
+
+
 # -- General configuration ---------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -99,6 +102,7 @@ html_sidebars = {
 
 extensions.append("sphinx_material")
 extensions.append("numpydoc")
+extensions.append("sphinx_click")
 html_theme_path = sphinx_material.html_theme_path()
 html_context = sphinx_material.get_html_context()
 html_theme = "sphinx_material"

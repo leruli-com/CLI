@@ -1,7 +1,7 @@
 |queuelogo| Leruli-Queue
 ========================
 
-.. hint:: Please feel free to `✎ improve this page <https://github.com/leruli-com/CLI/edit/master/docs/queue.rst>`_ or to `🕮 ask questions about this page <https://github.com/leruli-com/CLI/discussions>`_.
+.. note:: Please feel free to `✎ improve this page <https://github.com/leruli-com/CLI/edit/master/docs/queue.rst>`_ or to `🕮 ask questions about this page <https://github.com/leruli-com/CLI/discussions>`_.
 
 .. |queuelogo| image:: _static/images/boxes-stacked-solid.png
   :width: 30
