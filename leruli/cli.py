@@ -509,9 +509,22 @@ def group_task_prune():
 
 
 @group_task_prune.command()
+@click.argument("jobid", required=False)
 @click.argument("bucket", required=False)
-def task_prune(bucket: str):
+def task_prune(jobid: str, bucket: str):
     """Deletes the input/output files of a bucket."""
+    if (jobid is None and bucket is not None) or (jobid is not None and bucket is None):
+        print("Either specify none or both of jobid and bucket.")
+        sys.exit(1)
+
+    if jobid is None:
+        with open("leruli.job") as fh:
+            jobid = fh.read().strip()
+    status = leruli.task_status(jobid)
+    if status["status"] == "running":
+        print("Cannot prune a running job: the job would complete and fail.")
+        sys.exit(1)
+
     if bucket is None:
         with open("leruli.bucket") as fh:
             bucket = fh.read().strip()
