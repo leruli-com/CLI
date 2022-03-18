@@ -74,6 +74,8 @@ def task_submit(
 def task_status(jobid: str):
     """Queries the status of a job at Leruli Queue/Cloud."""
     api_secret = internal.get_api_secret()
+    if api_secret is None:
+        return
 
     payload = {
         "secret": api_secret,
@@ -101,6 +103,9 @@ def task_get(directory: str, bucket: str):
 def task_cancel(jobid: str):
     """Cancels a task on Leruli Queue/Cloud."""
     api_secret = internal.get_api_secret()
+    if api_secret is None:
+        return
+
     payload = {
         "secret": api_secret,
         "jobid": jobid,
@@ -111,8 +116,10 @@ def task_cancel(jobid: str):
 
 def task_publish_code(code: str, version: str):
     """Uploads a local docker image to use with Leruli Queue/Cloud."""
-    s3_client = internal.get_s3_client()
     api_secret = internal.get_api_secret()
+    if api_secret is None:
+        return
+    s3_client = internal.get_s3_client()
 
     client = docker.from_env()
     image = client.images.get(f"{code}:{version}")

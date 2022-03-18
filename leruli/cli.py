@@ -1,7 +1,6 @@
 """Console script for leruli."""
 import sys
 import click
-import os
 import leruli
 import tabulate
 import base64
@@ -465,7 +464,9 @@ def task_status(jobid: str):
         with open("leruli.job") as fh:
             jobid = fh.read().strip()
     status = leruli.task_status(jobid)
-    if status["reason"] is not None:
+    if status is None:
+        sys.exit(1)
+    if status["reason"] is None:
         print(status["status"])
     else:
         print(status["status"] + ": " + status["reason"])
