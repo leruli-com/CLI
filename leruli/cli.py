@@ -465,7 +465,10 @@ def task_status(jobid: str):
         with open("leruli.job") as fh:
             jobid = fh.read().strip()
     status = leruli.task_status(jobid)
-    print(status)
+    if status["reason"] is not None:
+        print(status["status"])
+    else:
+        print(status["status"] + ": " + status["reason"])
 
 
 @click.group()

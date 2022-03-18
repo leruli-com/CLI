@@ -80,8 +80,6 @@ def task_status(jobid: str):
         "jobid": jobid,
     }
     status = rq.post(f"{internal.BASEURL}/v22_1/task-status", json=payload).json()
-    if type(status) == list:
-        return ": ".join(status.json())
     return status
 
 
