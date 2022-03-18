@@ -84,11 +84,15 @@ def _base_call(
                 raise LeruliInternalError()
             res = res.json()
         else:
+            # Internal error?
             if str(res.status_code).startswith("5"):
                 print(SORRY)
                 raise LeruliInternalError()
-            res = res.json()
 
+            # No content?
+            if res.status_code == 204:
+                return None
+            res = res.json()
         return res
     except:
         print(SORRY)

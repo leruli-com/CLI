@@ -32,9 +32,13 @@ def graph_to_geometry(graph: str, format: str, reference: str, version: str = No
     try:
         result = leruli.graph_to_geometry(graph, format, version)
     except Exception as e:
+        raise
         print(f"ERROR: {str(e)}", file=sys.stderr)
         sys.exit(1)
-    print(result["geometry"])
+    if result is None:
+        print("Could not find a geometry.")
+    else:
+        print(result["geometry"])
 
 
 @click.group()

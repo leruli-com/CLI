@@ -35,6 +35,26 @@ def graph_to_geometry(
     urgent: bool = False,
     progress: bool = False,
 ):
+    """Obtains a 3D geometry for a molecular graph.
+
+    Parameters
+    ----------
+    graph : str
+        SMILES
+    format : str
+        The requested geometry format: XYZ, SDF, PDB.
+    version : str, optional
+        Specific version of the API to use, by default "latest"
+    urgent : bool, optional
+        For interactive use only, by default False
+    progress : bool, optional
+        Whether to show a progress bar, by default False
+
+    Returns
+    -------
+    str or None
+        String of the file, None if no geometry could be found
+    """
     payload = {"graph": graph, "format": format}
     return internal._base_call("graph-to-geometry", payload, version, urgent, progress)
 
