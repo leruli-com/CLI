@@ -18,8 +18,7 @@ setup(
     author_email="info@leruli.com",
     python_requires=">=3.6",
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
-        "Intended Audience :: Developers",
+        "Development Status :: 5 - Production/Stable",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
@@ -40,6 +39,6 @@ setup(
     packages=find_packages(include=["leruli", "leruli.*"]),
     test_suite="tests",
     tests_require=test_requirements,
-    version="0.1.10",
+    version="22.1",
     zip_safe=False,
 )

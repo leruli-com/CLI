@@ -500,7 +500,12 @@ def task_cancel(jobid: str):
         with open("leruli.job") as fh:
             jobid = fh.read().strip()
     status = leruli.task_cancel(jobid)
-    print(status)
+    if status is None:
+        sys.exit(1)
+    if status["reason"] is None:
+        print(status["status"])
+    else:
+        print(status["status"] + ": " + status["reason"])
 
 
 @click.group()
@@ -585,6 +590,7 @@ cli = click.CommandCollection(
         group_task_prune,
         group_task_get,
         group_task_list_codes,
+        group_task_cancel,
     ],
     context_settings=CONTEXT_SETTINGS,
 )
