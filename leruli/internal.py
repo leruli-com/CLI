@@ -1,3 +1,4 @@
+from ensurepip import version
 from typing import Dict
 import os
 import requests as rq
@@ -33,15 +34,16 @@ def _base_call(
     endpoint: str,
     payload: Dict,
     version: str,
-    urgent: bool,
-    progress: bool,
+    urgent: bool = False,
+    progress: bool = False,
     files: Dict = {},
 ):
     """Common code to deal with the delayed responses as they can come from the API."""
     try:
-        res = rq.post(
-            f"{BASEURL}/{version}/{endpoint}?urgent={urgent}", json=payload, files=files
-        )
+        url = f"{BASEURL}/{version}/{endpoint}"
+        if urgent is True:
+            url = f"{url}?urgent={urgent}"
+        res = rq.post(url, json=payload, files=files)
 
         pbar = None
         # wait for delayed responses
@@ -107,6 +109,15 @@ def get_api_secret():
         )
         return None
     return os.getenv("LERULI_API_SECRET")
+
+
+def get_group_token():
+    """Fetches the current group token."""
+    api_secret = get_api_secret()
+    if api_secret is None:
+        return None
+
+    return _base_call("group-token", payload={"secret": api_secret}, version="latest")
 
 
 def get_s3_client():

@@ -504,6 +504,19 @@ def task_cancel(jobid: str):
 
 
 @click.group()
+def group_task_list_codes():
+    pass
+
+
+@group_task_list_codes.command()
+def task_list_codes():
+    """Lists all codes available to you."""
+    codes = leruli.task_list_codes()
+    for code, version in codes:
+        print(f"{code}:{version}")
+
+
+@click.group()
 def group_task_prune():
     pass
 
@@ -571,6 +584,7 @@ cli = click.CommandCollection(
         group_task_publish_code,
         group_task_prune,
         group_task_get,
+        group_task_list_codes,
     ],
     context_settings=CONTEXT_SETTINGS,
 )

@@ -120,6 +120,7 @@ def task_publish_code(code: str, version: str):
     if api_secret is None:
         return
     s3_client = internal.get_s3_client()
+    group = internal.get_group_token()
 
     client = docker.from_env()
     image = client.images.get(f"{code}:{version}")
@@ -129,13 +130,38 @@ def task_publish_code(code: str, version: str):
     cache.seek(0)
     tgz = gzip.compress(cache.read())
 
-    s3_client.fput(f"code-{api_secret}", f"{code}-{version}.tgz", tgz, len(tgz))
+    s3_client.fput(f"code-{group}", f"{code}-{version}.tgz", tgz, len(tgz))
+
+
+def task_list_codes():
+    """Lists codes available to your account on Leruli Queue/Cloud.
+
+    Returns
+    -------
+    list[tuple[str, str]]
+        Code name and version tuples.
+    """
+    api_secret = internal.get_api_secret()
+    if api_secret is None:
+        return []
+
+    s3_client = internal.get_s3_client()
+    group = internal.get_group_token()
+    objects = s3_client.list_objects(f"code-{group}")
+    codes = []
+    for obj in objects:
+        filename = obj.object_name
+        if not filename.endswith(".tgz"):
+            continue
+        basename = filename[:-4]
+        code, version = basename.rsplit("-", 1)
+        codes.append((code, version))
+    return codes
 
 
 def task_prune(bucket: str):
     """Irreversibly deletes the Leruli Queue/Cloud store of input and output files."""
     s3_client = internal.get_s3_client()
-
     for obj in s3_client.list_objects(bucket, recursive=True):
         s3_client.remove_object(bucket, obj.object_name)
     s3_client.remove_bucket(bucket)
