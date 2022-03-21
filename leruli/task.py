@@ -47,6 +47,8 @@ def task_submit_many(
 
     def do_cases(cases):
         failed = []
+        if len(cases) == 0:
+            return failed
         res = rq.post(
             f"{internal.BASEURL}/v22_1/bulk/task-submit", json=[_[0] for _ in cases]
         )
@@ -79,7 +81,7 @@ def task_submit_many(
 
         if len(cases) == 50:
             failed += do_cases(cases)
-        cases = []
+            cases = []
 
     failed += do_cases(cases)
 
