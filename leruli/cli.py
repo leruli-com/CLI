@@ -3,8 +3,12 @@ import sys
 import click
 import leruli
 import tabulate
+import glob
+import os
 import base64
 from typing import List
+
+from leruli.task import task_submit_many
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -430,25 +434,62 @@ def group_task_submit():
 @click.option("--memory", default=4000, help="Memory limit in MB.")
 @click.option("--time", default=60 * 24, help="Time limit in minutes.")
 @click.option("--cores", default=1, help="Number of cores to allocate.")
+@click.option(
+    "--batch",
+    nargs=1,
+    help="Submit multiple directories at once, specified as either a string of a globbing pattern (e.g., case-?/run-*/) or a file with a line-by-line list of directories.",
+)
 @click.argument("code")
 @click.argument("version")
 @click.argument("command", nargs=-1, required=True)
 def task_submit(
-    memory: int, time: int, cores: int, code: str, version: str, command: str
+    memory: int,
+    time: int,
+    cores: int,
+    batch: str,
+    code: str,
+    version: str,
+    command: str,
 ):
-    """Submit a job to the Leruli queue. This is a paid feature requiring an API secret, which can be obtained from info@leruli.com."""
+    """Submit one or many jobs to the Leruli queue. This is a paid feature requiring an API secret, which can be obtained from info@leruli.com."""
 
-    try:
-        jobid = leruli.task_submit(
-            ".", code, version, command, cores, memory, time * 60
-        )
-    except ValueError as e:
-        print(f"Not submitted: {str(e)}")
-        sys.exit(1)
-    if jobid is not None:
-        print(jobid)
+    if batch is None:
+        try:
+            jobid = leruli.task_submit(
+                ".", code, version, command, cores, memory, time * 60
+            )
+        except ValueError as e:
+            print(f"Not submitted: {str(e)}")
+            sys.exit(1)
+        if jobid is not None:
+            print(jobid)
+        else:
+            sys.exit(1)
     else:
-        sys.exit(1)
+        try:
+            with open(batch) as fh:
+                directories = []
+                for line in fh.readlines():
+                    line = line.strip()
+                    if len(line) > 0:
+                        directories.append(line)
+        except:
+            directories = glob.glob(batch)
+
+        njobs = len(directories)
+        failed = task_submit_many(
+            directories,
+            [code] * njobs,
+            [version] * njobs,
+            [command] * njobs,
+            [cores] * njobs,
+            [memory] * njobs,
+            [time * 60] * njobs,
+        )
+        for directory in failed:
+            print(f"Not submitted: {directory}")
+        if len(failed) > 0:
+            sys.exit(1)
 
 
 @click.group()

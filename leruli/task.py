@@ -7,6 +7,80 @@ import gzip
 import docker
 import requests as rq
 import uuid
+from collections.abc import Iterable
+from typing import List
+import tqdm
+
+
+def task_submit_many(
+    directories: Iterable[str],
+    codes: Iterable[str],
+    versions: Iterable[str],
+    commands: Iterable[str],
+    cores: Iterable[int],
+    memorymb: Iterable[int],
+    timeseconds: Iterable[int],
+) -> List[str]:
+    """Submits many calculations to Leruli Queue/Cloud at once.
+
+    Parameters
+    ----------
+    directories : Iterable[str]
+        Paths to directories, either absolute or relative.
+    codes : Iterable[str]
+        Codes to run. Needs to be of same length as `directories`.
+    versions : Iterable[str]
+        Code versions to use. Needs to be of same length as `directories`.
+    commands : Iterable[str]
+        Commands to execute. Needs to be of same length as `directories`.
+    cores : Iterable[int]
+        Cores to use. Needs to be of same length as `directories`.
+    memorymb : Iterable[int]
+        Memory to use in MB. Needs to be of same length as `directories`.
+    timeseconds : Iterable[int]
+        Time limit for jobs in seconds. Needs to be of same length as `directories`.
+
+    Returns
+    -------
+    list[str]
+        A list of those directories which could not be submitted, e.g. due to missing permissions.
+    """
+
+    def do_cases(cases):
+        failed = []
+        res = rq.post(
+            f"{internal.BASEURL}/v22_1/bulk/task-submit", json=[_[0] for _ in cases]
+        )
+        results = res.json()
+        for case, result in zip(cases, results):
+            payload, directory = case
+
+            if result["status"] != 200:
+                failed.append(directory)
+                continue
+
+            jobid = result["data"]
+            _task_submit_finalize(directory, jobid, payload["bucketid"])
+        return failed
+
+    cases = []
+    failed = []
+    directories = list(directories)
+    for args in tqdm.tqdm(
+        zip(directories, codes, versions, commands, cores, memorymb, timeseconds),
+        total=len(directories),
+    ):
+
+        payload = _task_submit_payload(*args)
+        directory = args[0]
+        cases.append((payload, directory))
+
+        if len(cases) == 50:
+            failed += do_cases(cases)
+
+    failed += do_cases(cases)
+
+    return failed
 
 
 def task_submit(
@@ -19,6 +93,28 @@ def task_submit(
     timeseconds: int = 24 * 60 * 60,
 ):
     """Submits a given directory content as job to Leruli Queue/Cloud."""
+    payload = _task_submit_payload(
+        directory, code, version, command, cores, memorymb, timeseconds
+    )
+
+    res = rq.post(f"{internal.BASEURL}/v22_1/task-submit", json=payload)
+    if res.status_code != 200:
+        print("Cannot submit jobs. Please check the input.")
+        return
+    jobid = res.json()
+
+    _task_submit_finalize(directory, jobid, payload["bucketid"])
+
+
+def _task_submit_payload(
+    directory: str,
+    code: str,
+    version: str,
+    command: str,
+    cores: int,
+    memorymb: int,
+    timeseconds: int,
+):
     api_secret = internal.get_api_secret()
     if api_secret is None:
         return
@@ -57,12 +153,10 @@ def task_submit(
         "memorymb": memorymb,
         "timelimit": timeseconds,
     }
-    res = rq.post(f"{internal.BASEURL}/v22_1/task-submit", json=payload)
-    if res.status_code != 200:
-        print("Cannot submit jobs. Please check the input.")
-        return
-    jobid = res.json()
+    return payload
 
+
+def _task_submit_finalize(directory, jobid, bucket):
     # local handle
     with open(f"{directory}/leruli.job", "w") as fh:
         fh.write(f"{jobid}\n")
