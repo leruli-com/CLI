@@ -7,8 +7,7 @@ import gzip
 import docker
 import requests as rq
 import uuid
-from collections.abc import Iterable
-from typing import List
+from typing import List, Iterable
 import tqdm
 
 
@@ -70,13 +69,17 @@ def task_submit_many(
         zip(directories, codes, versions, commands, cores, memorymb, timeseconds),
         total=len(directories),
     ):
-
-        payload = _task_submit_payload(*args)
+        try:
+            payload = _task_submit_payload(*args)
+        except ValueError as e:
+            failed.append(args[0])
+            continue
         directory = args[0]
         cases.append((payload, directory))
 
         if len(cases) == 50:
             failed += do_cases(cases)
+        cases = []
 
     failed += do_cases(cases)
 
@@ -93,9 +96,12 @@ def task_submit(
     timeseconds: int = 24 * 60 * 60,
 ):
     """Submits a given directory content as job to Leruli Queue/Cloud."""
-    payload = _task_submit_payload(
-        directory, code, version, command, cores, memorymb, timeseconds
-    )
+    try:
+        payload = _task_submit_payload(
+            directory, code, version, command, cores, memorymb, timeseconds
+        )
+    except ValueError as e:
+        print (f"Failed: {str(e)}")
 
     res = rq.post(f"{internal.BASEURL}/v22_1/task-submit", json=payload)
     if res.status_code != 200:
@@ -131,7 +137,7 @@ def _task_submit_payload(
     # in-memory tar file
     buffer = io.BytesIO()
     with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
-        tar.add(".", arcname=os.path.basename("."))
+        tar.add(directory, arcname=os.path.basename("."))
 
         runscript = io.BytesIO(("#!/bin/bash\n" + " ".join(command)).encode("ascii"))
         tarinfo = tarfile.TarInfo(name="run.sh")
