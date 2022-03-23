@@ -1,4 +1,4 @@
-|queuelogo| Leruli-Queue
+|queuelogo| Leruli Queue
 ========================
 
 .. note:: Please feel free to `✎ improve this page <https://github.com/leruli-com/CLI/edit/master/docs/queue.rst>`_ or to `🕮 ask questions about this page <https://github.com/leruli-com/CLI/discussions>`_.
@@ -7,6 +7,82 @@
   :width: 30
   :alt: queue logo
 
+Leruli Queue conceptually is an alternative to job schedulers like SLURM. The main difference is the focus on scalibility and intake of tens of thousands of jobs at once. Whatever you can run under Linux, you likely can run via Leruli Queue on hundreds of machines in parallel. 
+
+
+Getting Started
+###############
+
+To make the best use of our software, we suggest the following workflow: any individual calulation with all input and (later) output files is a single folder. Since the input files need to be distributed to the compute nodes, it is required to only store actually needed input files in this folder at time of submission. In the following, we run a psi4 calculation via Leruli Queue.
+
+First, we need the `leruli` command line tool:
+
+.. code-block:: bash
+
+    pip install -U leruli
+
+Since the calculations will consume resources, we need to authenticate. This is achieved by adding the following lines to your `~/.bashrc` file:
+
+.. code-block:: bash
+
+    export LERULI_API_SECRET=<your API secret>
+    export LERULI_S3_SERVER=<your S3 server>
+    export LERULI_S3_ACCESS=<your S3 access>
+    export LERULI_S3_SECRET=<your S3 secret>
+
+You should have been provided with the credentials by the point-of-contact in your group. If you are new to Leruli, please get in touch via info@leruli.com to obtain an API secret. Now we set up the actual calculation. Create a new folder and define a psi4 input file within that folder:
+
+.. code-block:: bash
+
+    make test
+    cd test
+    echo "molecule{
+    o
+    h 1 roh
+    h 1 roh 2 ahoh
+
+    roh = 0.957
+    ahoh = 104.5
+    }
+
+    set basis cc-pVDZ
+    set ccenergy print 3
+    set scf print 1
+    energy('ccsd')" > input.dat
+
+Normally, you would run `psi4` as follows (if it were installed on your machine):
+
+.. code-block:: bash
+
+    psi4 input.dat
+
+Now to run it in the cloud on Leruli, instead you run
+
+.. code-block:: bash
+
+    leruli task-submit psi4 1.5 psi4 input.dat
+
+This tells leruli to run the command `psi4 input.dat` with the data from the current directory using the code `psi4` in version 1.5. If you run the command, new files are created in your directory: `leruli.job` contains the job id, a unique identifier of the submission. It is guaranteed to be unique across all submissions from all users. The other file is `leruli.bucket` which contains the folder in a distributed storage system where your input files have been copied to and where the compute node will download them. You can monitor the progress of the calculation by running
+
+.. code-block:: bash
+
+    leruli task-status
+
+Which will print "received" (the calculation has been accepted but is too far down the queue), "submitted" (the calculation is towards the head of the queue and is likely to start soon), "running" (some node is working on it right now), or "completed" (the job is done and the results have been uploaded to the distributed storage). Which result you are shown depends on how quickly you ran `leruli status` after submission. Once the output is `completed`, you can download the results from the distributed storage to your computer. This is done with
+
+.. code-block:: bash
+
+    leruli task-get
+
+If you check the directory contents now, you will find all the output files as if you had run `psi4` directly in this directory on your computer. Please note that the results are still available on the distributed storage system in case you want to downlaod them again, e.g. to share them with colleagues. To clean them up, run
+
+.. code-block:: bash
+
+    leruli task-purge
+
+This step is not reversible: once deleted from the distributed storage, the results and input files are not available for download and cannot be reconstructed. Purging the task does not affect your downloaded copy of the data.
+
+It is important that you run all these commands in the same directory, as the `leruli.job` file is used to figure out which job this is about. While advanced usage allows you to access jobs from other directories and other tricks, this goes beyond the initial getting started. Please refer to the detailed documentation of the Leruli CLI for all options.
 
 API access
 ##########
@@ -33,9 +109,11 @@ Setting a compute secret and rotating it is identical:
 
 .. code-block:: bash
 
-    curl -X POST ... example here
+    curl -X POST "https://api.leruli.com/v22_1/group-rotate-compute-secret" \
+         -H "Accept: application/json" -H "Content-Type: application/json" \
+         -d '{"adminsecret":"ADMINSECRETHERE"}'
 
-Take that token and place it in the configuration file for the client.
+where `ADMINSECRETHERE` is your admin secret. Take that token and place it in the configuration file for the client.
 
 When setting up storage, make sure the S3 object storage does not allow listing all buckets, since the security model of input and output data is designed around unguessable bucket names. Depending on your threat model, it might be acceptable to share S3 credentials within one group, as accessing other user's data requires knowledge of the corresponding bucket.
 
@@ -46,7 +124,9 @@ To create a new user (i.e. API token), use
 
 .. code-block:: bash
 
-    curl -X POST ... example here
+    curl -X POST "https://api.leruli.com/v22_1/group-create-user" \
+         -H "Accept: application/json" -H "Content-Type: application/json" \
+         -d '{"adminsecret":"ADMINSECRETHERE","name":"USERNAME","admin":false}' 
 
 where name should be the identifier allowing you to revoke an API secret in the future, e.g. if a machine gets stolen or a user leave the group. Note that you cannot retrieve the API token again except for the first call.
 
@@ -54,7 +134,9 @@ To disable access for a user, use
 
 .. code-block:: bash
 
-    curl -X POST ... example here
+    curl -X POST "https://api.leruli.com/v22_1/group-revoke-user" \
+         -H "Accept: application/json" -H "Content-Type: application/json" \
+         -d '{"adminsecret":"string","name":"string"}' 
 
 which will be effective immediately. Their corresponding jobs and data will be kept (and executed if still queueing). Any admin user has access to them. Note that you cannot delete the last admin user token.
 
