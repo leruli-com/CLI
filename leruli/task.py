@@ -1,4 +1,3 @@
-from sys import intern
 from . import internal
 import os
 import io
@@ -7,8 +6,7 @@ import gzip
 import docker
 import requests as rq
 import uuid
-from collections.abc import Iterable
-from typing import List
+from typing import List, Iterable
 import tqdm
 
 

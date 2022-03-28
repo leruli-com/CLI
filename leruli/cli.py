@@ -4,7 +4,6 @@ import click
 import leruli
 import tabulate
 import glob
-import os
 import base64
 from typing import List
 

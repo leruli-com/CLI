@@ -1,4 +1,3 @@
-from ensurepip import version
 from typing import Dict
 import os
 import requests as rq
