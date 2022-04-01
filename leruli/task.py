@@ -102,7 +102,7 @@ def task_submit(
             directory, code, version, command, cores, memorymb, timeseconds
         )
     except ValueError as e:
-        print (f"Failed: {str(e)}")
+        print(f"Failed: {str(e)}")
 
     res = rq.post(f"{internal.BASEURL}/v22_1/task-submit", json=payload)
     if res.status_code != 200:
@@ -226,12 +226,16 @@ def task_publish_code(code: str, version: str):
     client = docker.from_env()
     image = client.images.get(f"{code}:{version}")
     cache = io.BytesIO()
-    for chunk in image.save():
+    for chunk in image.save(named=True):
         cache.write(chunk)
     cache.seek(0)
     tgz = gzip.compress(cache.read())
+    del cache
+    buffer = io.BytesIO(tgz)
 
-    s3_client.fput(f"code-{group}", f"{code}-{version}.tgz", tgz, len(tgz))
+    s3_client.put_object(
+        f"code-{group}", f"{code}-{version}.tgz", buffer, buffer.getbuffer().nbytes
+    )
 
 
 def task_list_codes():

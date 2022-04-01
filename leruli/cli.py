@@ -603,7 +603,7 @@ def group_task_publish_code():
 @click.argument("version")
 def task_publish_code(code: str, version: str):
     """Uploads a local docker image to the queue."""
-    leruli.task_publish_code()
+    leruli.task_publish_code(code, version)
 
 
 cli = click.CommandCollection(
