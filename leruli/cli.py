@@ -485,8 +485,8 @@ def task_submit(
             [time * 60] * njobs,
         )
         stoptime = modtime.time()
-        for directory in sorted(failed):
-            print(f"Not submitted: {directory}")
+        for directory in sorted(failed.keys()):
+            print(f"Not submitted: {directory} - {failed[directory]}")
         duration = stoptime - starttime
         print(f"Submitted {njobs} in {duration:1.1f}s ({njobs/duration:1.0f}/s)")
         if len(failed) > 0:

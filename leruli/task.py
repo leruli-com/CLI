@@ -38,6 +38,7 @@ async def _async_object_stage(
         counter[rank] += 2
         return {"error": "Directory already submitted.", "directory": directory}
 
+    # TODO: detect failed S3 interactions
     bucket = str(uuid.uuid4())
     await s3_client.create_bucket(Bucket=bucket)
     counter[rank] += 1
@@ -103,8 +104,8 @@ def task_submit_many(
 
     Returns
     -------
-    list[str]
-        A list of those directories which could not be submitted, e.g. due to missing permissions.
+    dict[str]
+        Keys: directories which could not be submitted, values: reasons for this to happen.
     """
 
     cases = list(
@@ -124,6 +125,7 @@ def task_submit_many(
     [idqueue.put(_) for _ in range(nprocs)]
     progress_counter = mp.Array("i", nprocs, lock=False)
 
+    # Uploading
     with tqdm.tqdm(total=len(cases), desc="Uploading job data") as pbar:
         with mp.Pool(
             nprocs,
@@ -143,21 +145,20 @@ def task_submit_many(
                 result.wait()
                 break
 
-        # TODO error handling buckets
-
         # prepare for stage 2: submission to bulk API
-        failed = []
+        failed = {}
         cases = []
         for case in sum(result.get(), []):
             if "error" in case:
-                failed.append(case["directory"])
+                failed[case["directory"]] = case["error"]
             else:
                 payload = case.copy()
                 del payload["directory"]
                 cases.append((payload, case["directory"]))
 
-    results = sum(asyncio.run(_task_submit_many_API_toasync(cases)), [])
-    failed += results
+    results = asyncio.run(_task_submit_many_API_toasync(cases))
+    for result in results:
+        failed.update(results)
     return failed
 
 
@@ -180,7 +181,7 @@ def _task_submit_many_toasync(cases):
 
 
 async def _task_submit_many_API(session, segment):
-    failed = []
+    failed = {}
     async with session.post(
         f"{internal.BASEURL}/v22_1/bulk/task-submit", json=[_[0] for _ in segment]
     ) as res:
@@ -189,7 +190,14 @@ async def _task_submit_many_API(session, segment):
             payload, directory = case
 
             if result["status"] != 200:
-                failed.append(directory)
+                reason = "Job not accepted"
+                if result["status"] == 403:
+                    reason = "API key not accepted"
+                if result["status"] == 412:
+                    reason = "Compute secret not set-up"
+                if result["status"] == 422:
+                    reason = f"Job not accepted: {str(result)}"
+                failed[directory] = reason
                 continue
 
             jobid = result["data"]
