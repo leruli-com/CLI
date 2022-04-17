@@ -5,9 +5,7 @@ import leruli
 import tabulate
 import glob
 import base64
-from typing import List
-
-from leruli.task import task_submit_many
+import time as modtime
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -476,7 +474,8 @@ def task_submit(
             directories = glob.glob(batch)
 
         njobs = len(directories)
-        failed = task_submit_many(
+        starttime = modtime.time()
+        failed = leruli.task_submit_many(
             directories,
             [code] * njobs,
             [version] * njobs,
@@ -485,8 +484,11 @@ def task_submit(
             [memory] * njobs,
             [time * 60] * njobs,
         )
-        for directory in failed:
+        stoptime = modtime.time()
+        for directory in sorted(failed):
             print(f"Not submitted: {directory}")
+        duration = stoptime - starttime
+        print(f"Submitted {njobs} in {duration:1.1f}s ({njobs/duration:1.0f}/s)")
         if len(failed) > 0:
             sys.exit(1)
 

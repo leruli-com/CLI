@@ -1,3 +1,4 @@
+import aiohttp
 from . import internal
 import os
 import io
@@ -8,6 +9,68 @@ import requests as rq
 import uuid
 from typing import List, Iterable
 import tqdm
+import tqdm.asyncio
+import asyncio
+import aiobotocore.session
+import multiprocessing as mp
+import time
+
+
+async def _async_object_stage(
+    s3_client,
+    directory: str,
+    code: str,
+    version: str,
+    command: str,
+    cores: int,
+    memorymb: int,
+    timeseconds: int,
+):
+    global counter
+    global rank
+
+    api_secret = internal.get_api_secret()
+    if api_secret is None:
+        counter[rank] += 2
+        return {"error": "No API token configured", "directory": directory}
+
+    if os.path.exists(f"{directory}/leruli.job"):
+        counter[rank] += 2
+        return {"error": "Directory already submitted.", "directory": directory}
+
+    bucket = str(uuid.uuid4())
+    await s3_client.create_bucket(Bucket=bucket)
+    counter[rank] += 1
+
+    # in-memory tar file
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+        tar.add(directory, arcname=os.path.basename("."))
+
+        runscript = io.BytesIO(("#!/bin/bash\n" + " ".join(command)).encode("ascii"))
+        tarinfo = tarfile.TarInfo(name="run.sh")
+        tarinfo.size = runscript.getbuffer().nbytes
+        tar.addfile(tarinfo=tarinfo, fileobj=runscript)
+    buffer.seek(0)
+
+    # upload
+    await s3_client.put_object(Bucket=bucket, Key="run.tgz", Body=buffer)
+
+    # submit to API
+    codeversion = f"{code}:{version}"
+    payload = {
+        "secret": api_secret,
+        "bucketid": bucket,
+        "name": "default",
+        "codeversion": codeversion,
+        "cores": cores,
+        "memorymb": memorymb,
+        "timelimit": timeseconds,
+        "directory": directory,
+    }
+
+    counter[rank] += 1
+    return payload
 
 
 def task_submit_many(
@@ -44,15 +107,85 @@ def task_submit_many(
         A list of those directories which could not be submitted, e.g. due to missing permissions.
     """
 
-    def do_cases(cases):
+    cases = list(
+        zip(directories, codes, versions, commands, cores, memorymb, timeseconds)
+    )
+
+    def split(a, n):
+        k, m = divmod(len(a), n)
+        return (a[i * k + min(i, m) : (i + 1) * k + min(i + 1, m)] for i in range(n))
+
+    # TODO find number of procs
+    nprocs = 5
+    segments = split(cases, nprocs)
+
+    # assign one id to every worker
+    idqueue = mp.Queue()
+    [idqueue.put(_) for _ in range(nprocs)]
+    progress_counter = mp.Array("i", nprocs, lock=False)
+
+    with tqdm.tqdm(total=len(cases), desc="Uploading job data") as pbar:
+        with mp.Pool(
+            nprocs,
+            initializer=_task_submit_many_initializer,
+            initargs=(idqueue, progress_counter),
+        ) as p:
+            result = p.map_async(_task_submit_many_toasync, segments)
+            while True:
+                total = sum([progress_counter[_] for _ in range(nprocs)])
+                pbar.n = int(total / 2)
+                pbar.refresh()
+                try:
+                    result.successful()
+                except:
+                    time.sleep(0.1)
+                    continue
+                result.wait()
+                break
+
+        # TODO error handling buckets
+
+        # prepare for stage 2: submission to bulk API
         failed = []
-        if len(cases) == 0:
-            return failed
-        res = rq.post(
-            f"{internal.BASEURL}/v22_1/bulk/task-submit", json=[_[0] for _ in cases]
-        )
-        results = res.json()
-        for case, result in zip(cases, results):
+        cases = []
+        for case in sum(result.get(), []):
+            if "error" in case:
+                failed.append(case["directory"])
+            else:
+                payload = case.copy()
+                del payload["directory"]
+                cases.append((payload, case["directory"]))
+
+    results = sum(asyncio.run(_task_submit_many_API_toasync(cases)), [])
+    failed += results
+    return failed
+
+
+async def _task_submit_many_API_toasync(cases):
+    # build parallel task list
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        while len(cases) > 0:
+            segment, cases = cases[:50], cases[50:]
+            tasks.append(_task_submit_many_API(session, segment))
+
+        # defer for async execution
+        result = await tqdm.asyncio.tqdm.gather(*tasks, desc="Submitting job batches")
+
+    return result
+
+
+def _task_submit_many_toasync(cases):
+    return asyncio.run(_task_submit_many_worker(cases))
+
+
+async def _task_submit_many_API(session, segment):
+    failed = []
+    async with session.post(
+        f"{internal.BASEURL}/v22_1/bulk/task-submit", json=[_[0] for _ in segment]
+    ) as res:
+        results = await res.json()
+        for case, result in zip(segment, results):
             payload, directory = case
 
             if result["status"] != 200:
@@ -61,30 +194,32 @@ def task_submit_many(
 
             jobid = result["data"]
             _task_submit_finalize(directory, jobid, payload["bucketid"])
-        return failed
-
-    cases = []
-    failed = []
-    directories = list(directories)
-    for args in tqdm.tqdm(
-        zip(directories, codes, versions, commands, cores, memorymb, timeseconds),
-        total=len(directories),
-    ):
-        try:
-            payload = _task_submit_payload(*args)
-        except ValueError as e:
-            failed.append(args[0])
-            continue
-        directory = args[0]
-        cases.append((payload, directory))
-
-        if len(cases) == 50:
-            failed += do_cases(cases)
-            cases = []
-
-    failed += do_cases(cases)
-
     return failed
+
+
+async def _task_submit_many_worker(cases):
+    session = aiobotocore.session.get_session()
+    tasks = []
+    async with session.create_client(
+        "s3",
+        endpoint_url=os.getenv("LERULI_S3_SERVER"),
+        aws_secret_access_key=os.getenv("LERULI_S3_SECRET"),
+        aws_access_key_id=os.getenv("LERULI_S3_ACCESS"),
+    ) as s3_client:
+        for args in cases:
+            tasks.append(_async_object_stage(s3_client, *args))
+        cases = await asyncio.gather(*tasks)
+
+    return cases
+
+
+def _task_submit_many_initializer(idqueue, progress):
+    global rank
+    global counter
+    rank = idqueue.get()
+    counter = progress
+
+    # TODO print missing API key only once, abort immediately
 
 
 def task_submit(

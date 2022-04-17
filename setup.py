@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 with open("README.rst") as readme_file:
     readme = readme_file.read()
 
-requirements = ["Click>=7.0", "requests", "tabulate", "minio", "docker", "tqdm"]
+requirements = ["Click>=7.0", "requests", "tabulate", "minio", "docker", "tqdm", "aiobotocore", "aiohttp"]
 
 test_requirements = [
     "pytest>=3",
