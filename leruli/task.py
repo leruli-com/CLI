@@ -246,6 +246,7 @@ def task_submit(
         )
     except ValueError as e:
         print(f"Failed: {str(e)}")
+        return
 
     res = rq.post(f"{internal.BASEURL}/v22_1/task-submit", json=payload)
     if res.status_code != 200:
