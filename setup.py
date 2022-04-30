@@ -39,6 +39,6 @@ setup(
     packages=find_packages(include=["leruli", "leruli.*"]),
     test_suite="tests",
     tests_require=test_requirements,
-    version="22.1.2",
+    version="22.1.3",
     zip_safe=False,
 )
