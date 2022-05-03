@@ -1,7 +1,7 @@
 """Interface for leruli.com"""
 __author__ = "leruli.com"
 __email__ = "info@leruli.com"
-__version__ = "22.1.3"
+__version__ = "22.1.4"
 
 from .misc import *
 from .graph import *

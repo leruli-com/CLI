@@ -333,8 +333,11 @@ def task_status(jobid: str):
 def task_get(directory: str, bucket: str):
     """Downloads the input and output files of a Leruli Queue/Cloud task into a directory."""
     s3_client = internal.get_s3_client()
-    for obj in s3_client.list_objects(bucket):
+    for obj in s3_client.list_objects(bucket, recursive=True):
         object = obj.object_name
+        dirname = os.path.dirname(object)
+        if dirname != "":
+            os.makedirs(dirname, exist_ok=True)
         try:
             response = s3_client.get_object(bucket, object)
             content = response.read()
