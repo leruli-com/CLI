@@ -326,8 +326,11 @@ def task_status(jobid: str):
         "secret": api_secret,
         "jobid": jobid,
     }
-    status = rq.post(f"{internal.BASEURL}/v22_1/task-status", json=payload).json()
-    return status
+    res = rq.post(f"{internal.BASEURL}/v22_1/task-status", json=payload)
+    if res.status_code == 200:
+        return res.json()
+    if res.status_code == 404:
+        raise ValueError("No such job")
 
 
 def task_get(directory: str, bucket: str):

@@ -505,7 +505,11 @@ def task_status(jobid: str):
     if jobid is None:
         with open("leruli.job") as fh:
             jobid = fh.read().strip()
-    status = leruli.task_status(jobid)
+    try:
+        status = leruli.task_status(jobid)
+    except ValueError:
+        print ("No such job or not your job.")
+        sys.exit(1)
     if status is None:
         sys.exit(1)
     if status["reason"] is None:
