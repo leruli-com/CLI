@@ -530,7 +530,7 @@ def group_task_get():
 @group_task_get.command()
 @click.argument("bucket", required=False)
 def task_get(bucket: str):
-    """Get the status of a job in the queue."""
+    """Retrieve the input and result files of a job."""
     if bucket is None:
         with open("leruli.bucket") as fh:
             bucket = fh.read().strip()
