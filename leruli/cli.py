@@ -503,8 +503,12 @@ def group_task_status():
 def task_status(jobid: str):
     """Get the status of a job in the queue."""
     if jobid is None:
-        with open("leruli.job") as fh:
-            jobid = fh.read().strip()
+        try:
+            with open("leruli.job") as fh:
+                jobid = fh.read().strip()
+        except FileNotFoundError:
+            print ("No job ID specified and no leruli.job in current folder.")
+            sys.exit(1)
     try:
         status = leruli.task_status(jobid)
     except ValueError:
