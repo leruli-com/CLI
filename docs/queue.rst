@@ -178,7 +178,7 @@ You can add a new user via the `useradd` command:
 
 .. code-block:: bash
 
-    sudo useradd -m -s /bin/bash -u 2013 leruli
+    sudo useradd -m -s /bin/bash leruli
 
 This automatically creates a home directory for the new user `leruli` which is required for a succesful installation.
 
